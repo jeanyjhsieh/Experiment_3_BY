@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+
+<head>
+	<script src="libs/jquery-3.1.1.min.js"></script>
+	<script src="jatos.js"></script>
+	<link rel="stylesheet" href="css/pure-release-0.6.0/pure-min.css">
+	<link rel="stylesheet" href="css/sort.css">
+</head>
+
+<body>
+</body>
+
+<script>
+	jatos.onLoad(function () {
+		initBatchConditions();
+        jatos.startComponentByPos(2);
+	});
+
+	// We use JATOS' Batch Session to store which conditions are available.
+	// If this is the first run we have to initialize the Batch Session with 
+	// the data from the component's JSON input. You can 'reset' the conditions
+	// by deleting them from the Batch Session.
+	function initBatchConditions() {
+		// Check if 'conditions' are not already in the batch session
+		if (!jatos.batchSession.defined("/conditions")) {
+            // create array of conditions (conunter balance indexes) if it doesn't already exist
+            conditions = [
+
+            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40
+
+            ];
+			// Put the conditions in the batch session
+			jatos.batchSession.set("conditions", conditions)
+				.fail(initBatchConditions); // If it fails: try again
+		}
+	}
+
+</script>
+
+</html>
