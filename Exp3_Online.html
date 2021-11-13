@@ -1,0 +1,881 @@
+<!-- Data to save:
+
+saveData(k).image_number = stim_order(k);
+saveData(k).image_name = d(stim_order(k)).name;
+saveData(k).image_grey = greyscale(stim_order(k));
+saveData(k).response_age = str2double(liveText);
+
+Use these plugins:
+
+For text entry field:
+
+jspsych-survey-text plugin
+
+Stimulus duration: 1000ms
+
+Format long format data to js compatible here: https://csvjson.com/csv2json
+
+ -->
+
+ <!doctype html>
+ <html>
+
+ <!-- load dependent files here -->
+ <head>
+
+  <!-- Text that appears in browser tab -->
+<title>Age Judgment</title>
+
+    <!-- edit this file to change background and text colours -->
+    <!--link href="jspsych/css/appearance_settings.css" rel="stylesheet"></link -->
+
+    <!-- Essential to have this script to run on JATOS -->
+    <script src="jatos.js"></script>
+
+    <!-- use this library to parse strings for system info -->
+    <script src="jspsych/Detect_parse/detect.js"></script>
+
+   <!-- the 'script' html tag is used to call in Java Script files -->
+   <script src="jspsych/jspsych.js"></script>
+   <!-- call function used to turn mouse cursor on and off -->
+   <script src="jspsych/plugins/jspsych-call-function.js"></script>
+   <script src="jspsych/plugins/jspsych-external-html.js"></script>
+   <script src="jspsych/plugins/jspsych-html-button-response.js"></script>
+   <script src="jspsych/plugins/jspsych-html-keyboard-response.js"></script>
+   <script src="jspsych/plugins/jspsych-image-keyboard-response.js"></script>
+   <script src="jspsych/plugins/jspsych-survey-text.js"></script>
+   <!-- customised version of survey text: button removed -->
+   <script src="jspsych/plugins/jspsych-survey-text_WITHOUT_BUTTON.js"></script>
+   <script src="jspsych/plugins/jspsych-instructions.js"></script>   
+   <script src="jspsych/plugins/jspsych-fullscreen.js"></script>
+   <script src="jspsych/plugins/jspsych-resize.js"></script>
+   <!-- Script containing colour/greyscale counterbalance -->
+   <script src="Counter_Balance.js"></script>
+
+   <!-- the 'link' tag is used to load CSS files -->
+   <!-- Do NOT *need* a closing tag for 'link' -->
+   <link href="jspsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+   
+  <!-- to use with batch calls for counter balance array -->
+	<script src="jspsych/libs/jquery-3.1.1.min.js"></script>
+	<link rel="stylesheet" href="jspsych/css/pure-release-0.6.0/pure-min.css">
+	<link rel="stylesheet" href="jspsych/css/sort.css">
+
+  <style> 
+    .jspsych-btn {
+     font-size: 40px;
+    }
+   .jspsych-display-element {
+     font-size: 40px;
+     color: rgb(95, 90, 90);
+}
+  </style>
+
+
+  <!-- uncomment below to change background colour for debugging, stim dimension measurment, etc. -->
+
+   <!-- 
+   <style>
+    body {
+      background-color: #000000;
+    }
+  </style>
+  -->
+
+ </head>
+
+ <body></body>
+
+<!-- script is javascript specific code -->
+<script>
+
+function isMobile() {
+return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+if(isMobile()) {    // prints to console
+    console.log('MOBILE Device detected');}
+
+
+
+
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+// Force use of Chrome - if not chrome do not start experiment
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
+// Create variable for Chrome detection
+var Chrome_Browser = 999;
+
+// printk general information about browser
+// added extra check for 'edg' in user.browser.family as it was not a condition and => was returning 'Chrome' in error
+console.log("Your big aul browser",navigator.userAgent)
+
+// create variable containing parsed borwser information
+var user = detect.parse(navigator.userAgent);
+
+// Display some property values in my browser's dev tools console
+console.log("Browser info",
+  user.browser.family,
+  user.browser.version,
+  user.os.name
+);
+
+
+// add relevant information to variables for data
+user_browser_family = user.browser.family
+user_browser_version = user.browser.version
+user_os_name = user.os.name
+
+//var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
+
+// Check if Chrome being used
+//if(navigator.userAgent.indexOf("Chrome") != -1 )
+if(user.browser.family.includes("Chrome")==true)
+    {
+        // print message to console
+        console.log('Browser = Chrome');
+        // assigned 1 to Chrome variable
+        Chrome_Browser = 1;
+
+    }else{
+
+      // print message to console
+      console.log('Browser != Chrome');
+      // send pop-out box with message to browser
+      alert('Please use Chrome Internet browser.');
+      // assigned 0 to Chrome variable
+      Chrome_Browser = 0;
+
+    }
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
+
+// if not accessed on mobile device AND is being run on Chrome Browswer: run experiment
+if (!isMobile() && Chrome_Browser==1) {
+
+    // detect screen resolution
+    function getResolution() {
+        console.log("Your screen resolution is: " + screen.width + "x" + screen.height),
+        screen_width = screen.width,
+        screen_height = screen.height
+    }
+
+    // run the function to grab resolution
+    getResolution()
+
+    console.log(navigator);
+
+
+    // Display some property values in my browser's dev tools console
+    console.log("Browser info check for data save: Browser: ",
+        user_browser_family, "/ Version: ",
+        user_browser_version, "/ Operating System: ",
+        user_os_name, "/ screen width: ",
+        screen_width, "/ screen height: ",
+        screen_height
+    );
+
+///////////////////////////////////////////////////////
+//
+// set-up variables and arrays
+//
+///////////////////////////////////////////////////////
+
+/* start the experiment */
+// IMPORTANT to wrap entire experiment code in this function if you need to communicate with Batch Sesssion data at *start* of each run of the experiment
+jatos.onLoad(function () {
+
+//“Zoom” a browser window
+document.body.style.zoom = "50%";
+
+//document.body.style.fontSize = "250%"
+
+
+  // to make things easier to set up, we don't hard-code the completion
+  // URL within the code - instead, we specify it in the JATOS GUI via
+  // the JSON input option, and access that info here
+  var finish_url_base = jatos.studyJsonInput.finish_url_base;
+
+  // pull out the Sona ID from the URL
+  // note that it is important that this is done using the JATOS property,
+  // not the jsPsych property - JATOS messes with the URL such that the ID
+  // won't be available to jsPsych
+  // also important to note that this info is not available until within
+  // the `jatos.onLoad` function
+  var sona_id = jatos.urlQueryParameters.sona_id;
+
+  // ID is undefined if not coming from Sona
+  if (sona_id === undefined) {
+      sona_id = null;
+  }
+
+  jsPsych.data.addProperties({sona_id: sona_id});
+
+  var redirect_url = null;
+
+  if (sona_id) {
+      // if we have a Sona ID, then use it to form the URL that the
+      // participant needs to load in order to get credit
+      redirect_url = finish_url_base + sona_id;
+  }
+  else {
+      redirect_url = "https://unsw-psy.sona-systems.com";
+  }
+
+// check code being executed
+console.log('Contents of sona_id: ', sona_id);
+console.log('Contents of DOT sona_id: ', jatos.urlQueryParameters.sona_id);
+console.log('Contents of DOT id: ', jatos.urlQueryParameters.id);
+console.log('Contents of batch array: ', jatos.batchSession.get("conditions"));
+
+  ForDeletionOfArrayEntry = [];
+  FunctionIndex = [];
+
+  function getNextCondition() {
+      // Get the still available conditions from the Batch Session
+      var conditions = jatos.batchSession.get("conditions");
+      
+      // copy data for use outside of array
+      ForDeletionOfArrayEntry = conditions;
+      // If no more conditions throw an error
+      if (conditions.length == 0) {
+        $('p').text("Error: max number of workers reached.");
+        throw "Max number of workers reached.";
+      }
+      // Get a random condition
+      var randomIndex = Math.floor(Math.random() * conditions.length);
+      // for use outside of function
+      FunctionIndex = randomIndex;
+
+      var randomCondition = conditions[randomIndex];
+      // Delete the choosen condition from the array
+      //conditions.splice(randomIndex, 1);
+      // Set the changed conditions array in the Batch Session.
+      //jatos.batchSession.set("conditions", conditions).fail(function () {
+        //randomCondition = getNextCondition(); // If it fails: try again
+      //});
+      return randomCondition;
+    }		
+
+  // pass the randomly selected counter_balance number to the global variable
+  GLOBAL_CB_COND_ID=getNextCondition();
+
+  /* pick a random condition for the subject at the start of the experiment  */
+  var subject_id = jsPsych.randomization.randomID(15);
+
+  // Check the counterbalance code
+  console.log('Contents of subject_id: ', subject_id)
+
+
+  jsPsych.data.addProperties({
+    subject: subject_id,
+    counter_balance_assignment: GLOBAL_CB_COND_ID,
+  });
+
+  console.log('Outside function test: ', ForDeletionOfArrayEntry[FunctionIndex])
+
+  // Check the counterbalance value
+  console.log('Contents of GLOBAL_CB_COND_ID: ', GLOBAL_CB_COND_ID)
+
+  // create empty list for trial timeline
+  var timeline_list = [];
+
+  // Original Stimuli Dimensions
+  original_height = 1718
+  original_width = 2444
+
+  // Divide stimuli by this value
+  var stim_size_adjust = 1
+
+  // Value arrived at by display pixels / display cm --> see comments in resize function below
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  heightpix=original_height/stim_size_adjust // this is used in the stimulus display function
+  widthpix=original_width/stim_size_adjust // this is used in the stimulus display function
+  // These cm are direct mesaurements of the adjusted pix length above as presented to screen
+  heightcm=18
+  widthcm=25.6
+  // calulate this value based on the average of both divisions
+  pix_per_unit = Math.round(((heightpix/heightcm)+(widthpix/widthcm))/2)
+  ////////////////////////////////////////////////////////////////////////////////////////////
+
+  // fixation presentation duration in ms
+  var fix_pres_dur = 500
+
+  // stimulus presentation duration in ms
+  var stim_pres_dur = 2000//1000
+
+  // create an empty string for directory path
+  stimulus_dir = ''
+
+  // create empty variable for index reference of image stimuli
+  image_increment = 0;
+
+  var Part_CB_Stim = [];
+
+  // manually input file names in the abscene of glob type function
+  // ENSURE that the order of stimuli here match the intended order of csv matrix columns
+  // NOTE: Whichever order images are here is the order that the counter-balance binary codes will be assigned via the matching indices in Counter_Balance.js: sorted by GLOBAL_CB_COND_ID
+  var image_list = ['AF-200-228-N.jpg',
+  'AF-201-060-N.jpg',
+  'AF-202-122-N.jpg',
+  'AF-203-077-N.jpg',
+  'AF-204-067-N.jpg',
+  'AF-205-155-N.jpg',
+  'AF-206-079-N.jpg',
+  'AF-207-023-N.jpg',
+  'AF-208-003-N.jpg',
+  'AF-209-006-N.jpg',
+  'AF-210-050-N.jpg',
+  'AF-211-066-N.jpg',
+  'AF-212-097-N.jpg',
+  'AF-213-126-N.jpg',
+  'AF-214-139-N.jpg',
+  'AF-215-70-N.jpg',
+  'AF-216-106-N.jpg',
+  'AF-217-155-N.jpg',
+  'AF-218-157-N.jpg',
+  'AF-219-106-N.jpg',
+  'AF-220-107-N.jpg',
+  'AF-221-147-N.jpg',
+  'AF-223-183-N.jpg',
+  'AF-231-357-N.jpg',
+  'AF-236-145-N.jpg',
+  'AF-238-185-N.jpg',
+  'AF-241-141-N.jpg',
+  'AF-245-143-N.jpg',
+  'AF-248-148-N.jpg',
+  'AF-254-167-N.jpg',
+  'AM-201-076-N.jpg',
+  'AM-202-079-N.jpg',
+  'AM-203-086-N.jpg',
+  'AM-204-122-N.jpg',
+  'AM-205-153-N.jpg',
+  'AM-206-086-N.jpg',
+  'AM-207-108-N.jpg',
+  'AM-208-143-N.jpg',
+  'AM-209-048-N.jpg',
+  'AM-210-035-N.jpg',
+  'AM-211-052-N.jpg',
+  'AM-212-050-N.jpg',
+  'AM-213-056-N.jpg',
+  'AM-214-168-N.jpg',
+  'AM-215-120-N.jpg',
+  'AM-216-114-N.jpg',
+  'AM-217-085-N.jpg',
+  'AM-218-085-N.jpg',
+  'AM-219-101-N.jpg',
+  'AM-220-134-N.jpg',
+  'AM-221-184-N.jpg',
+  'AM-223-138-N.jpg',
+  'AM-224-126-N.jpg',
+  'AM-225-102-N.jpg',
+  'AM-226-234-N.jpg',
+  'AM-227-184-N.jpg',
+  'AM-233-236-N.jpg',
+  'AM-239-147-N.jpg',
+  'AM-241-287-N.jpg',
+  'AM-247-165-N.jpg',
+  'BF-001-025-N.jpg',
+  'BF-002-001-N.jpg',
+  'BF-003-003-N.jpg',
+  'BF-004-014-N.jpg',
+  'BF-005-001-N.jpg',
+  'BF-006-017-N.jpg',
+  'BF-007-001-N.jpg',
+  'BF-008-001-N.jpg',
+  'BF-009-002-N.jpg',
+  'BF-010-001-N.jpg',
+  'BF-011-002-N.jpg',
+  'BF-012-001-N.jpg',
+  'BF-013-001-N.jpg',
+  'BF-203-184-N.jpg',
+  'BF-211-168-N.jpg',
+  'BF-224-002-N.jpg',
+  'BF-225-192-N.jpg',
+  'BF-236-177-N.jpg',
+  'BF-238-190-N.jpg',
+  'BF-254-201-N.jpg',
+  'BM-001-014-N.jpg',
+  'BM-002-013-N.jpg',
+  'BM-003-003-N.jpg',
+  'BM-004-002-N.jpg',
+  'BM-005-003-N.jpg',
+  'BM-009-002-N.jpg',
+  'BM-010-003-N.jpg',
+  'BM-011-016-N.jpg',
+  'BM-012-018-N.jpg',
+  'BM-013-002-N.jpg',
+  'BM-015-015-N.jpg',
+  'BM-016-036-N.jpg',
+  'BM-034-031-N.jpg',
+  'BM-212-117-N.jpg',
+  'BM-213-134-N.jpg',
+  'BM-218-132-N.jpg',
+  'BM-225-154-N.jpg',
+  'BM-243-218-N.jpg',
+  'BM-244-197-N.jpg',
+  'BM-245-164-N.jpg',
+  'LF-200-058-N.jpg',
+  'LF-201-035-N.jpg',
+  'LF-202-065-N.jpg',
+  'LF-203-066-N.jpg',
+  'LF-204-133-N.jpg',
+  'LF-205-100-N.jpg',
+  'LF-206-078-N.jpg',
+  'LF-207-198-N.jpg',
+  'LF-208-127-N.jpg',
+  'LF-209-072-N.jpg',
+  'LF-210-220-N.jpg',
+  'LF-211-003-N.jpg',
+  'LF-212-066-N.jpg',
+  'LF-213-079-N.jpg',
+  'LF-214-090-N.jpg',
+  'LF-215-157-N.jpg',
+  'LF-216-121-N.jpg',
+  'LF-233-277-N.jpg',
+  'LF-238-154-N.jpg',
+  'LF-240-199-N.jpg',
+  'LM-200-045-N.jpg',
+  'LM-201-057-N.jpg',
+  'LM-202-072-N.jpg',
+  'LM-203-026-N.jpg',
+  'LM-204-001-N.jpg',
+  'LM-206-204-N.jpg',
+  'LM-207-004-N.jpg',
+  'LM-208-110-N.jpg',
+  'LM-209-111-N.jpg',
+  'LM-210-156-N.jpg',
+  'LM-211-128-N.jpg',
+  'LM-212-143-N.jpg',
+  'LM-213-061-N.jpg',
+  'LM-214-165-N.jpg',
+  'LM-215-247-N.jpg',
+  'LM-216-082-N.jpg',
+  'LM-217-162-N.jpg',
+  'LM-222-239-N.jpg',
+  'LM-236-163-N.jpg',
+  'LM-237-264-N.jpg',
+  'WF-001-003-N.jpg',
+  'WF-002-004-N.jpg',
+  'WF-003-003-N.jpg',
+  'WF-005-010-N.jpg',
+  'WF-006-002-N.jpg',
+  'WF-007-001-N.jpg',
+  'WF-008-002-N.jpg',
+  'WF-009-001-N.jpg',
+  'WF-010-004-N.jpg',
+  'WF-011-002-N.jpg',
+  'WF-012-002-N.jpg',
+  'WF-013-003-N.jpg',
+  'WF-014-002-N.jpg',
+  'WF-015-006-N.jpg',
+  'WF-016-015-N.jpg',
+  'WF-017-003-N.jpg',
+  'WF-018-017-N.jpg',
+  'WF-019-005-N.jpg',
+  'WF-020-002-N.jpg',
+  'WF-021-002-N.jpg',
+  'WF-022-017-N.jpg',
+  'WF-023-003-N.jpg',
+  'WF-026-002-N.jpg',
+  'WF-216-079-N.jpg',
+  'WF-221-005-N.jpg',
+  'WF-222-092-N.jpg',
+  'WF-237-067-N.jpg',
+  'WF-240-083-N.jpg',
+  'WF-246-087-N.jpg',
+  'WF-251-014-N.jpg',
+  'WM-001-014-N.jpg',
+  'WM-002-009-N.jpg',
+  'WM-003-002-N.jpg',
+  'WM-004-010-N.jpg',
+  'WM-006-002-N.jpg',
+  'WM-009-002-N.jpg',
+  'WM-010-001-N.jpg',
+  'WM-011-002-N.jpg',
+  'WM-012-001-N.jpg',
+  'WM-013-001-N.jpg',
+  'WM-014-002-N.jpg',
+  'WM-015-002-N.jpg',
+  'WM-016-001-N.jpg',
+  'WM-017-002-N.jpg',
+  'WM-018-002-N.jpg',
+  'WM-019-003-N.jpg',
+  'WM-020-001-N.jpg',
+  'WM-021-001-N.jpg',
+  'WM-022-001-N.jpg',
+  'WM-023-001-N.jpg',
+  'WM-024-015-N.jpg',
+  'WM-025-002-N.jpg',
+  'WM-026-001-N.jpg',
+  'WM-028-003-N.jpg',
+  'WM-029-023-N.jpg',
+  'WM-031-003-N.jpg',
+  'WM-221-091-N.jpg',
+  'WM-223-056-N.jpg',
+  'WM-248-036-N.jpg',
+  'WM-249-239-N.jpg']
+
+  // Turns mouse cursor off
+  var cursor_off = {
+      type: 'call-function',
+      func: function() {
+          document.body.style.cursor= "none";
+      }
+      }
+
+  // Turns mouse cursor on
+  var cursor_on = {
+      type: 'call-function',
+      func: function() {
+          document.body.style.cursor= "auto";
+      }
+      }
+
+  // This loop captures the index for a given participant and
+  // matches the path for each counterbalanced image condition
+  for (var i = 0; i<counter_balance_by_participant.length; i++){
+
+    // if matches counter-balanced condition number
+    if(counter_balance_by_participant[i].count_bal_cond_num == GLOBAL_CB_COND_ID){
+      
+      // create path for colour vs grey
+      // colour == 0
+      // grey == 1
+      // NOTE: The stimulus names in Counter_Balance.js do not actually matter so long
+      // as the 0 or 1 value is correctly matched to the counter-balance condition number; and subsequnetly the 0 or 1 is matched to the index number from the list of images in the order as input in image_list above
+      if(counter_balance_by_participant[i].Col_vs_Grey == 0){
+        stimulus_dir='Stimuli/jpg/YB+/';
+      } else {
+        stimulus_dir='Stimuli/jpg/YB-/';
+      }
+
+      // store all relevant indices/paths in one place
+      Part_CB_Stim.push([i,stimulus_dir+image_list[image_increment]])
+      // increment index for image array
+      image_increment++;
+      console.log('Contents of', Part_CB_Stim)
+
+    } // end of participant ID if statement
+    else {
+      // prints to console
+      console.log('skipping this array index - not a match for PID');
+    } // End of else statement
+
+  } // end of for loop
+
+  // shuffle condition array - this occurs after stimuli hue has be assigned in original image list order so that it's mapped to the counter-balanced hue instructions.
+  // NOTE: the number stored in this array is the index in Counter_Balance.js - use to sanity check the colour vs greyscale instructions
+  Part_CB_Stim=jsPsych.randomization.shuffle(Part_CB_Stim);
+
+  /* Browser requirements screen borrowed from CP */
+  var requirements_screen = {
+
+  type: "html-button-response",
+
+  stimulus: "<p>Before beginning, please minimise any distractions in your environment (e.g., TV), so that you can pay close attention to the task."
+
+            +"<p>You will also need to use a desktop computer or laptop. The experiment may not work on a phone or tablet."
+
+            +"<p>Finally, it is best to use the browser Google Chrome, which can be downloaded for free from: https://www.google.com/chrome/"
+
+            +"<p>If you are not currently using Chrome, please close the browser window and access the experiment link again using Chrome. Thank you!",
+
+
+
+  choices: ['Click to Continue'],
+
+  data: {display_resolution_etc: 'width, height, user.browser.family, user.browser.version, user.os.name', screen_width, screen_height, user_browser_family, user_browser_version, user_os_name
+
+}
+
+
+  };
+
+  timeline_list.push(requirements_screen);
+
+  // Enter fullscreen mode
+  var Fullscreen_Mode = {
+  type: 'fullscreen',
+    fullscreen_mode: true
+  };
+  /* returns/pushes to screen */
+  timeline_list.push(Fullscreen_Mode);
+
+  var consent = {
+      type: "external-html",
+      url: "consent.html",
+      cont_btn: "consented",
+      check_fn: function () {
+          jsPsych.data.addProperties(
+              {
+                  wants_copy: document.getElementById("copy").checked,
+              }
+          );
+          return true;
+      }
+  };
+
+  timeline_list.push(consent);
+
+  // PCheck questions
+  var PCheck = {
+      type: 'html-button-response',
+      stimulus: '<p>Do you have trouble recognising faces, for example, mixing up characters in TV shows and films, or not recognising people you should?</p>',
+      choices: ['Yes', 'No'],
+      data: {presentation_screen: 'Pfilter screen'}
+  };
+
+
+  /* returns/pushes to screen */
+  timeline_list.push(PCheck);
+
+  // Participant details
+  var Part_Details = {
+        type: 'survey-text',
+        questions: [
+        // Text above response box
+        {prompt: "What age are you?", name: 'P_Age',
+        // type of input allowed: text/number
+        input_type: 'number',
+        // forces value entry before proceeding
+        required: true,
+        // max box size in terms of characters
+        columns: 2, // doesn't do anything when number is choice
+        // Lowest value entry allowed when input_type is number
+        min_number: '18',
+        // largest value entry allowed when input_type is number
+        max_number: '99',
+        // stop keycode of choice being recognised in response
+        keyInstruct: 'return event.keyCode !== 69'
+                }, // || event.keyCode === 46 ? true : !isNaN(Number(event.key))'}
+        
+        {prompt: "What race do you identify as (e.g. Caucasian, Hispanic)?", name: 'P_Race',
+        // type of input allowed: text/number
+        input_type: 'text',
+        // forces value entry before proceeding
+        required: true, 
+        columns: 25  // doesn't do anything when number is choice
+                },
+
+        {prompt: "What is your gender?", name: 'P_Gender',
+        // type of input allowed: text/number
+        input_type: 'text',
+        // forces value entry before proceeding
+        required: true,
+        columns: 25
+                }
+
+        
+        ],
+        data: {presentation_screen: 'Demographic Information'}
+  };
+
+  /* returns/pushes to screen */
+  timeline_list.push(Part_Details);
+
+  /* Size credit card to control stimulus size across different screen resolutions */
+
+  ///*
+  var get_sizing = {
+
+    type: 'resize',
+
+    item_width: 8.6, // cm
+
+    item_height: 5.4, // cm
+
+    prompt: "<p>Please get a credit/debit card. If you don't have a credit card, please find another card with the standard size of 8.6cm x 5.4cm"
+
+    +"<p>Click and drag the lower right corner of the above box until the box is the same size as the card when held against the screen."
+
+    +"<p>This helps us to show the experiment at the same size for all participants."
+
+    +"<p>Once you have finished, click Continue. </p>",
+
+    // This value is calulated as follows:
+    // Original Stimuli Dimensions:
+    // original_height = 1784 pix
+    // original_width = 2444 pix
+    // The above values are divided by d (2.5) to ensure all images fit to screen (some hair was passing edge)
+    // therefore:
+    // height is set to 713.6
+    // width is set to 977.6
+    // To calculate pixels per unit divide pixels by cm
+    // Height = 20.1cm on screen as default
+    // Witdh = 27.5cm on screen as default
+    // Therefore: 977.6/27.5 = 35.5490909090909
+    // 713.6 / 20.1 = 35.5024875621891 -> minor discrepancy due to human error
+    // average should be 35.52578923564
+    pixels_per_unit: pix_per_unit, // should be this number of pixels per cm
+
+    // default resize box size
+    starting_size: 324,
+
+    // save pixels per unit for reference in data output
+    data: {pixels_per_unit: pix_per_unit}
+
+  };
+
+  timeline_list.push(get_sizing);
+  //*/
+
+  // Text instructions
+  var instructions_screen ={
+
+    type: 'instructions',
+    pages: ["You will be shown a series of face images - 200 in total. <br> <br> Please rate the age of the person in each image when prompted to do so by typing your best guess as a number. <br> <br> You will be able to enter the age by either: <br> typing it using the number keys; <br> by pushing the UP ARROW or the DOWN ARROW; <br> or by clicking through the available numbers in the response box. <br> <br> Please move your mouse cursor to the bottom right corner before beginning. <br> <br> Press ENTER to begin."],
+    data: {presentation_screen: 'beginning of experiment: text instruction screen', image_list, counter_balance_condt_num: GLOBAL_CB_COND_ID, Part_CB_Stim}
+
+  };
+
+  /* returns/pushes each iteration to timeline_list */
+  timeline_list.push(instructions_screen);
+
+  // Trial for loop
+  for (var trial_pres = 0; trial_pres<Part_CB_Stim.length; trial_pres++){
+
+      // remove counter balance from array - this doesn't run in real-time as it's run prior to being accessed
+      if (trial_pres == 0){
+
+        // IMPORTANT: Should only initialise changes to batch array here: at start of 1sttrial
+        // Delete the choosen condition from the array
+        ForDeletionOfArrayEntry.splice(FunctionIndex, 1);
+        // Set the changed conditions array in the Batch Session.
+        jatos.batchSession.set("conditions", ForDeletionOfArrayEntry).fail(function () {
+        randomCondition = getNextCondition(); // If it fails: try again
+        });
+
+      } // end of if statement
+
+
+      // create a variable that draws a fixation stimulus
+      var fixation = {
+
+          type: 'html-keyboard-response',
+          stimulus: '<span style="font-size:40px;">+</span>',
+          choices: jsPsych.NOKEYS,
+          // don't allow keypress to end trial
+          response_ends_trial: false,
+          trial_duration: fix_pres_dur,
+          data: {presentation_screen: 'fixation cross presentation screen', fix_pres_dur}
+      }
+
+      /* returns/pushes each iteration to timeline_list */
+      timeline_list.push(cursor_off, fixation);
+
+      // create a variable to present an image
+      var image_keyboard_trial = {
+
+          type: 'image-keyboard-response',
+          // stimulus location: directory path + image name
+          stimulus: Part_CB_Stim[trial_pres][1],
+          // stimulus presentation duration in ms
+          trial_duration: stim_pres_dur,
+          // don't allow keypress to end trial
+          response_ends_trial: false,
+          // Set the image height in pixels: original 1784
+          stimulus_height:heightpix,//1784
+          // Set the image width in pixels: original 2444
+          stimulus_width:widthpix,//2444
+          // do not display buttons
+          choices: null,
+          data: {presentation_screen: 'stimulus presentation screen', stim_pres_dur, CB_js_index: Part_CB_Stim[trial_pres][0], CB_js_Stim_Name: counter_balance_by_participant[Part_CB_Stim[trial_pres][0]].Stimuli, inline_instructed_stim_height: heightpix, inline_instructed_stim_width: widthpix}
+
+      }//counter_balance_by_participant[i].Col_vs_Grey
+      
+      
+      /* returns/pushes each iteration to timeline_list */
+      timeline_list.push(cursor_off, image_keyboard_trial);
+      // prints to console
+      //console.log('Contents: Part_CB_Stim');
+      //console.log(Part_CB_Stim);
+
+  
+
+      // variable/object that is equivalent to an dict in Python
+      var survey_trial = {
+
+        type: 'survey-text-no-button',
+        questions: [
+        // Text above response box
+        {prompt: "Please rate the age of that person then press ENTER", name: 'Age',
+        // type of input allowed: text/number
+        input_type: 'number',
+        // forces value entry before proceeding
+        required: true,
+        // max box size in terms of characters
+        columns: 2, // doesn't do anything when number is choice
+        // Lowest value entry allowed when input_type is number
+        min_number: '10',
+        // largest value entry allowed when input_type is number
+        max_number: '99',
+        // stop keycode of choice being recognised in response
+        keyInstruct: 'return event.keyCode !== 69'} // || event.keyCode === 46 ? true : !isNaN(Number(event.key))'}
+        ],
+        data: {presentation_screen: 'response input screen'}
+
+      };
+
+      /* returns/pushes each iteration to timeline_list */
+      timeline_list.push(cursor_on, survey_trial);
+    
+
+  } // End of for loop
+
+  // Debrief text at the end of the experiment
+  var debrief = {
+      type: "external-html",
+      url: "debrief.html",
+      cont_btn: "been_debriefed",
+  };
+  /* push debrief */
+  timeline_list.push(debrief);
+
+  // Debrief text at the end of the experiment
+  /*var debrief_inline = {
+    type: 'html-button-response',
+    stimulus: "Please read through the information below and then click on the button at the bottom. Note that <b>you must click on the button at the bottom of the page in order to receive your credit on Sona.<b> <br> <br> What kind of study is it, e.g., descriptive, correlational? <br> In this study, you saw a series of images on the screen, and made responses to indicate what you saw. The study has an experimental design. We manipulated certain attributes of the images (called independent variables) to see what effect this had on your responses (the dependent variable). <br> <br> What are the independent variables? How are you operationalizing them? <br> <br> The independent variables that we manipulated were properties of the images (e.g., orientation of a line, face’s direction of gaze, etc.). These properties are manipulated using graphical software, which allows us to control attributes very precisely (e.g., the software can generate an image of a face looking exactly 5 degree to the right, or a line tilted at exactly 22.5 degrees). <br> <br> What are the dependent variables that were measured? How are you operationalizing them? <br> <br> The dependent variables in this study were your reports of your perception of particular attributes of the image. We operationalized your perception of the images by asking you to respond with a specific categorical judgment, such as “The face was looking at me” or “The line was tilted to the right”. <br> <br> What is one potential confounding variable and how have you attempted to control for it? <br> <br> Images may look very different under different illumination conditions. To control for the influence of illumination variation, we used a database of images where the illumination was consistent thus ensuring control over how faces or objects are illuminated. <br> <br> What is one potential ethical issue, and how has the experimenter attempted to resolve it? <br> <br> One ethical issue common to most research performed with human participants is participant confidentiality. As is standard practice in research, any publications arising from this study will not include any personal information about the participants that would allow them to be identified (e.g., their names). <br> <br> How did the experimenter get from first year psychology to conducting this research? <br> <br> As an example career path in psychology, one of the experimenters, Dr Colin Palmer, completed an undergraduate course in Psychology and Neuroscience at Monash University in Melbourne, followed by a PhD investigating differences in perceptual experience in autism spectrum disorder. He is now a postdoctoral researcher at UNSW Sydney, working on social aspects of vision (e.g., perception of others’ eye gaze)." ,
+      choices: ['Click to Continue'],
+
+    data: {presentation_screen: 'Return to Sona and receive credit'},
+  };*/
+  /* push debrief */
+  //timeline_list.push(debrief_inline);
+
+  // exit fullscreen mode
+  timeline_list.push({
+  type: 'fullscreen',
+  fullscreen_mode: false
+  });
+
+
+      jsPsych.init({
+              // array/list: sequence of trials desired
+      timeline: timeline_list, // https://www.jspsych.org/overview/timeline/ possible solution to getting array at start of trial 
+      exclusions: {min_width: 800, min_height: 600},
+      //show_progress_bar: true,
+          on_finish: function() {
+              var resultJson = jsPsych.data.get().json();
+              jatos.submitResultData(resultJson)
+                          .done(jatos.endStudyAjax)
+                          .done(
+                              () => {
+                                  // once we're all done, redirect them to Sona
+                                  // to receive their credit
+                                  window.location.href = redirect_url;
+                              }
+                          );
+          }
+      }); // end of jsPsych.init
+  }); // end of jatos.onLoad
+
+  } // end of if not mobile device
+
+ </script>
+
+</html>
